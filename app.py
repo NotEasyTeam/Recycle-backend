@@ -16,6 +16,22 @@ cors = CORS(app, resources={r'*': {'origins': '*'}})
 client = MongoClient('localhost', 27017)
 db = client.tencycle
 
+#데코레이터 유저정보 불러오는 함수
+def authorize(f):
+    @wraps(f)
+    def decorated_function():
+        if not 'Authorization' in request.headers:
+            abort(401)
+        token = request.headers['Authorization']
+        try:
+            user = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        except: 
+            abort(401)
+        return f(user)        
+        
+    return decorated_function
+
+
 @app.route('/')
 def home():
     return jsonify({'msg' : 'success'})
@@ -27,17 +43,22 @@ def sign_up():
     print(data)
     
     password_hash = hashlib.sha256(data['password'].encode('utf-8')).hexdigest()
+    user_exists = bool(db.users.find_one({"userid" : data.get('userid')}))
+    print(user_exists)
     
-    doc = {
-        'username' : data.get('username'),
-        'userid' : data.get('userid'),
-        'password' : password_hash,
-        'userpoint' : '0'
-    }
+    if user_exists == True :
+        return jsonify({'result' : 'fail', 'msg' : '같은 아이디의 유저가 존재합니다.'})
+    else: 
+        doc = {
+            'username' : data.get('username'),
+            'userid' : data.get('userid'),
+            'password' : password_hash,
+            'userpoint' : '0'
+        }    
     
-    db.users.insert_one(doc)
-    
-    return jsonify({'msg':'success'})
+        db.users.insert_one(doc)
+        
+        return jsonify({'result': 'success', 'msg': '회원가입이 완료되었습니다.'})
 
 
 @app.route("/login", methods=["POST"])
@@ -69,6 +90,9 @@ def login():
         return jsonify({'result': 'success', 'token': token})
     else:
         return jsonify({'result': 'fail', 'msg': '아이디/비밀번호가 일치하지 않습니다.'})
+    
+    
+@app.route('')
 
 
 
