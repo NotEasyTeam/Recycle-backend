@@ -33,6 +33,7 @@ def authorize(f):
 
 
 @app.route('/')
+@authorize
 def home():
     return jsonify({'msg' : 'success'})
 
@@ -40,7 +41,6 @@ def home():
 def sign_up():
     
     data = json.loads(request.data)
-    print(data)
     
     password_hash = hashlib.sha256(data['password'].encode('utf-8')).hexdigest()
     user_exists = bool(db.users.find_one({"userid" : data.get('userid')}))
@@ -90,15 +90,18 @@ def login():
         return jsonify({'result': 'success', 'token': token})
     else:
         return jsonify({'result': 'fail', 'msg': '아이디/비밀번호가 일치하지 않습니다.'})
+
     
+@app.route("/getuserinfo", methods=["GET"])
+@authorize
+def get_user_info(user):
+    result = db.users.find_one({
+        '_id': ObjectId(user["id"])
+    })
     
-@app.route('')
-
-
-
-
-
-
+    print(result) 
+    
+    return jsonify({"msg": "success", "name": result["username"], "point": result["userpoint"]}) 
 
 
 
