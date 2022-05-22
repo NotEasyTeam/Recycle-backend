@@ -6,15 +6,13 @@ from bson import ObjectId
 import jwt
 from datetime import datetime, timedelta
 from flask import Flask, abort, jsonify, request
-from flask_cors import CORS
 from pymongo import MongoClient
 
 SECRET_KEY = 'recycle'
 
 app = Flask(__name__)
-cors = CORS(app, resources={r'*': {'origins': '*'}})
-client = MongoClient('localhost', 27017)
-db = client.tencycle
+client = MongoClient('mongodb+srv://test:sparta@cluster0.ocllx.mongodb.net/?retryWrites=true&w=majority')
+db = client.dbsparta
 
 @app.route('/')
 def home():
@@ -25,6 +23,7 @@ def sign_up():
     
     data = json.loads(request.data)
     print(data)
+    print(request.form)
     
     password_hash = hashlib.sha256(data['password'].encode('utf-8')).hexdigest()
     
@@ -71,11 +70,41 @@ def login():
         return jsonify({'result': 'fail', 'msg': '아이디/비밀번호가 일치하지 않습니다.'})
 
 
+@app.route("/getuserpaper", methods=["GET"])
+def get_user_paper():
+    #'_id': ObjectId(user["id"]),
 
+    user_paper = list(db.recycles.find(
+        {'category': 'paper'}).limit(9))
 
+    return jsonify({'message': 'success', "user_paper": user_paper})
 
+@app.route("/getusermetal", methods=["GET"])
+def get_user_metal():
+    #'_id': ObjectId(user["id"]),
 
+    user_metal = list(db.recycles.find(
+        {'category': 'metal'}).limit(9))
 
+    return jsonify({'message': 'success', "user_metal": user_metal})
+
+@app.route("/getuserplastic", methods=["GET"])
+def get_user_plastic():
+    #'_id': ObjectId(user["id"]),
+
+    user_plastic = list(db.recycles.find(
+        {'category': 'platic'}).limit(9))
+
+    return jsonify({'message': 'success', "user_plastic": user_plastic})
+
+@app.route("/getuserglass", methods=["GET"])
+def get_user_glass():
+    #'_id': ObjectId(user["id"]),
+
+    user_glass = list(db.recycles.find(
+        {'category': 'glass'}).limit(9))
+
+    return jsonify({'message': 'success', "user_glass": user_glass})
 
 
 if __name__ =='__main__':
