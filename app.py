@@ -5,7 +5,7 @@ from re import S
 from bson import ObjectId
 import jwt
 from datetime import datetime, timedelta
-from flask import Flask, abort, jsonify, request
+from flask import Flask, abort, jsonify, request, render_template
 from flask_cors import CORS
 from pymongo import MongoClient
 
@@ -35,7 +35,8 @@ def authorize(f):
 @app.route('/')
 @authorize
 def home():
-    return jsonify({'msg' : 'success'})
+    return render_template("mainpage.html")
+    # return jsonify({'msg' : 'success'})
 
 @app.route("/signup", methods=["POST"])
 def sign_up():
