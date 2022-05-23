@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 from pymongo import MongoClient
+from load_model import predict
 import certifi
 
 client = MongoClient('mongodb+srv://test:sparta@cluster0.1idhr.mongodb.net/cluster0?retryWrites=true&w=majority', tlsCAFile=certifi.where())
@@ -77,21 +78,22 @@ def login():
 
 @app.route("/upload", methods=["POST"])
 def image_predict():
-    img=request.files['file'] # 이미지 파일
-    user_id=request.form['id_give'] # 사용자 ID
+    img=request.files['file_give'] # 이미지 파일
+    img_name=img.name # 이미지명 (이렇게써도되는지는 몰겠음)
+    user_id=request.form['username_give'] # 사용자 ID
     now_time=datetime.now() # 현재 시각
     ext_tail=img_name.split(".")[-1] # 확장자 추출
-    file_name=f"{current_time.strftime('%Y%m%d%H%M%S')}.{ext_tail}" # '날짜.확장자' 를 파일명으로 지정
+    file_name=f"{now_time.strftime('%Y%m%d%H%M%S')}.{ext_tail}" # '날짜.확장자' 를 파일명으로 지정
     save_location=f"/static/image/{file_name}" # 저장할 장소
     img.save(save_location) # 이미지 저장
 
     # 예측
-    pred=load_model.predict(save_location)
+    pred=predict(save_location)
 
     # DB로 결과와 함께 전달
     doc={
         'user_id': user_id,
-        'image': img,
+        'image': img_name,
         'category': pred,
         'date': now_time
     }
@@ -105,7 +107,7 @@ def get_image():
     user_id=request.form['id_give'] # 사용자 ID
     result=db.recycles.find_one({'user_id': user_id}) # 가장 최근꺼 결과 가져오기
 
-    return jsonify({'img': img})
+    return jsonify({'img': result})
 
 
 
