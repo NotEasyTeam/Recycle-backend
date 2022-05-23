@@ -6,13 +6,16 @@ from bson import ObjectId
 import jwt
 from datetime import datetime, timedelta
 from flask import Flask, abort, jsonify, request
+from flask_cors import CORS
 from pymongo import MongoClient
 
 SECRET_KEY = 'recycle'
 
 app = Flask(__name__)
-client = MongoClient('mongodb+srv://test:sparta@cluster0.ocllx.mongodb.net/?retryWrites=true&w=majority')
-db = client.dbsparta
+cors = CORS(app, resources={r'*': {'origins': '*'}})
+client = MongoClient('localhost', 27017)
+db = client.tencycle
+
 
 #데코레이터 유저정보 불러오는 함수
 def authorize(f):
@@ -105,38 +108,51 @@ def get_user_info(user):
 @authorize
 def get_user_paper(user):
 
-    user_paper = list(db.recycles.find(
-        {'_id': ObjectId(user["id"]), 'category': 'paper'}).limit(9))
+    result = db.users.find_one({
+        '_id': ObjectId(user["id"])
+    })
 
-    return jsonify({'message': 'success', "user_paper": user_paper})
+    user_paper = list(db.recycles.find({'userid': result["userid"], 'category': 'paper'}, {'_id': False}).limit(9))
+    
+
+    return jsonify({'message': 'success', 'user_paper': user_paper})
 
 @app.route("/getusermetal", methods=["GET"])
 @authorize
 def get_user_metal(user):
 
-    user_metal = list(db.recycles.find(
-        {'_id': ObjectId(user["id"]), 'category': 'metal'}).limit(9))
-    
-    return jsonify({'message': 'success', "user_metal": user_metal})
+    result = db.users.find_one({
+        '_id': ObjectId(user["id"])
+    })
+
+    user_metal = list(db.recycles.find({'userid': result["userid"], 'category': 'metal'}, {'_id': False}).limit(9))    
+
+    return jsonify({'message': 'success', 'user_metal': user_metal})
 
 
 @app.route("/getuserplastic", methods=["GET"])
 @authorize
 def get_user_plastic(user):
 
-    user_plastic = list(db.recycles.find(
-        {'_id': ObjectId(user["id"]), 'category': 'plastic'}).limit(9))
+    result = db.users.find_one({
+        '_id': ObjectId(user["id"])
+    })
 
-    return jsonify({'message': 'success', "user_plastic": user_plastic})
+    user_plastic = list(db.recycles.find({'userid': result["userid"], 'category': 'plastic'}, {'_id': False}).limit(9))    
+
+    return jsonify({'message': 'success', 'user_plastic': user_plastic})
 
 @app.route("/getuserglass", methods=["GET"])
 @authorize
 def get_user_glass(user):
 
-    user_glass = list(db.recycles.find(
-        {'_id': ObjectId(user["id"]), 'category': 'glass'}).limit(9))
+    result = db.users.find_one({
+        '_id': ObjectId(user["id"])
+    })
 
-    return jsonify({'message': 'success', "user_glass": user_glass})
+    user_glass = list(db.recycles.find({'userid': result["userid"], 'category': 'glass'}, {'_id': False}).limit(9))    
+
+    return jsonify({'message': 'success', 'user_glass': user_glass})
 
 
 if __name__ =='__main__':
