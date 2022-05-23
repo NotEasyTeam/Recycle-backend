@@ -163,6 +163,20 @@ def image_predict(user):
     return jsonify({'msg': '예측 완료!'})
 
 
+@app.route("/main", methods=["GET"])
+@authorize
+def get_image(user):
+    
+    user_info = db.users.find_one({
+        '_id': ObjectId(user["id"])
+    })  
+    print(user_info)
+    image = list(db.recycles.find({'userid': user_info["userid"]}, {'_id': False}).sort("date", -1).limit(1))
+    uploadimage = image[0]['image']
+    
+    return jsonify({'img': uploadimage})
+
+
 
 @app.route("/getuserpaper", methods=["GET"])
 @authorize
