@@ -2,19 +2,22 @@ from functools import wraps
 import hashlib
 import json
 from re import S
+from urllib.parse import parse_qsl
 from bson import ObjectId
 import jwt
 from datetime import datetime, timedelta
-from flask import Flask, abort, jsonify, request
+from flask import Flask, abort, jsonify, redirect, request, render_template, url_for
 from flask_cors import CORS
 from pymongo import MongoClient
+import requests
 
 SECRET_KEY = 'recycle'
-
+KAKAO_REDIRECT_URI = 'http://localhost:5000/redirect'
 app = Flask(__name__)
 cors = CORS(app, resources={r'*': {'origins': '*'}})
 client = MongoClient('localhost', 27017)
 db = client.tencycle
+client_id = 'eb06aead9054aed0b2c737734a97ace8'
 
 
 #데코레이터 유저정보 불러오는 함수
@@ -36,7 +39,8 @@ def authorize(f):
 @app.route('/')
 @authorize
 def home():
-    return jsonify({'msg' : 'success'})
+    return redirect(url_for('mainpage'))
+    # return jsonify({'msg' : 'success'})
 
 @app.route("/signup", methods=["POST"])
 def sign_up():
@@ -91,6 +95,26 @@ def login():
         return jsonify({'result': 'success', 'token': token})
     else:
         return jsonify({'result': 'fail', 'msg': '아이디/비밀번호가 일치하지 않습니다.'})
+
+    
+@app.route("/kakaologin", methods=["POST"])
+def kakao_Login():
+    
+    data = json.loads(request.data)
+    print(data)
+    
+     
+    doc = {
+        'username' : data.get('username'),
+        'userid' : data.get('userid'),
+        'userpoint' : '0'
+    }    
+
+    db.users.update_one({"userid": data.get('userid')}, {"$set": doc}, upsert=True)
+        
+    return jsonify({'result': 'success', 'msg': '회원가입이 완료되었습니다.'})
+
+
     
 @app.route("/getuserinfo", methods=["GET"])
 @authorize
@@ -102,6 +126,42 @@ def get_user_info(user):
     print(result) 
     
     return jsonify({"msg": "success", "name": result["username"], "point": result["userpoint"]}) 
+
+
+@app.route("/upload", methods=["POST"])
+@authorize
+def image_predict(user):
+    
+    db_user = db.users.find_one({'_id': ObjectId(user["id"])})
+    print(db_user)
+    
+    image = request.files['image_give'] # 이미지 파일
+    print(image)
+    today = datetime.now() # 현재 시각
+    mytime = today.strftime('%Y-%m-%d-%H-%M-%S')
+
+    filename = f'recycle_img-{mytime}' #파일명
+
+    extension = image.filename.split('.')[-1] #확장자 빼기
+
+    save_to = f'static/image/{filename}.{extension}' # 저장 장소
+    image.save(save_to) #이미지 저장
+
+
+    # 예측
+    # pred = predict(save_location)
+
+    # DB로 결과와 함께 전달
+    doc={
+        'userid': db_user["userid"],
+        'image': filename,
+        # 'category': pred,
+        'date': today
+    }
+    db.recycles.insert_one(doc)
+
+    return jsonify({'msg': '예측 완료!'})
+
 
 
 @app.route("/getuserpaper", methods=["GET"])
@@ -153,6 +213,9 @@ def get_user_glass(user):
     user_glass = list(db.recycles.find({'userid': result["userid"], 'category': 'glass'}, {'_id': False}).limit(9))    
 
     return jsonify({'message': 'success', 'user_glass': user_glass})
+
+
+
 
 
 if __name__ =='__main__':
