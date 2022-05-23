@@ -3,6 +3,7 @@ import hashlib
 import json
 from re import S
 from urllib.parse import parse_qsl
+from load_model import predict
 from bson import ObjectId
 import jwt
 from datetime import datetime, timedelta
@@ -142,19 +143,33 @@ def image_predict(user):
     image.save(save_to)  # 이미지 저장
 
     # 예측
-    # pred = predict(save_location)
+    pred = predict(save_location)
 
     # DB로 결과와 함께 전달
     doc = {
         'userid': db_user["userid"],
         'image': filename,
-        # 'category': pred,
+        'category': pred,
         'date': today
     }
     db.recycles.insert_one(doc)
 
     return jsonify({'msg': '예측 완료!'})
 
+
+
+@app.route("/main", methods=["GET"])
+@authorize
+def get_image(user):
+    
+    user_info = db.users.find_one({
+        '_id': ObjectId(user["id"])
+    })  
+    print(user_info)
+    image = list(db.recycles.find({'userid': user_info["userid"]}, {'_id': False}).sort("date", -1).limit(1))
+    uploadimage = image[0]['image']
+    
+    return jsonify({'img': uploadimage})
 
 @app.route("/getuserpaper", methods=["GET"])
 @authorize
