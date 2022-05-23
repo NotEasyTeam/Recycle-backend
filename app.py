@@ -125,6 +125,41 @@ def get_user_info(user):
     return jsonify({"msg": "success", "name": result["username"], "point": result["userpoint"]}) 
 
 
+@app.route("/upload", methods=["POST"])
+@authorize
+def image_predict(user):
+    
+    db_user = db.users.find_one({'_id': ObjectId(user["id"])})
+    print(db_user)
+    
+    image = request.files['image_give'] # 이미지 파일
+    print(image)
+    today = datetime.now() # 현재 시각
+    mytime = today.strftime('%Y-%m-%d-%H-%M-%S')
+
+    filename = f'recycle_img-{mytime}' #파일명
+
+    extension = image.filename.split('.')[-1] #확장자 빼기
+
+    save_to = f'static/image/{filename}.{extension}' # 저장 장소
+    image.save(save_to) #이미지 저장
+
+
+    # 예측
+    # pred = predict(save_location)
+
+    # DB로 결과와 함께 전달
+    doc={
+        'userid': db_user["userid"],
+        'image': filename,
+        # 'category': pred,
+        'date': today
+    }
+    db.recycles.insert_one(doc)
+
+    return jsonify({'msg': '예측 완료!'})
+
+
 
 if __name__ =='__main__':
     app.run('0.0.0.0', port=5000, debug=True)
