@@ -2,19 +2,22 @@ from functools import wraps
 import hashlib
 import json
 from re import S
+from urllib.parse import parse_qsl
 from bson import ObjectId
 import jwt
 from datetime import datetime, timedelta
-from flask import Flask, abort, jsonify, request, render_template
+from flask import Flask, abort, jsonify, redirect, request, render_template, url_for
 from flask_cors import CORS
 from pymongo import MongoClient
+import requests
 
 SECRET_KEY = 'recycle'
-
+KAKAO_REDIRECT_URI = 'http://localhost:5000/redirect'
 app = Flask(__name__)
 cors = CORS(app, resources={r'*': {'origins': '*'}})
 client = MongoClient('localhost', 27017)
 db = client.tencycle
+client_id = 'eb06aead9054aed0b2c737734a97ace8'
 
 #데코레이터 유저정보 불러오는 함수
 def authorize(f):
@@ -35,7 +38,7 @@ def authorize(f):
 @app.route('/')
 @authorize
 def home():
-    return render_template("mainpage.html")
+    return redirect(url_for('mainpage'))
     # return jsonify({'msg' : 'success'})
 
 @app.route("/signup", methods=["POST"])
@@ -91,6 +94,23 @@ def login():
         return jsonify({'result': 'success', 'token': token})
     else:
         return jsonify({'result': 'fail', 'msg': '아이디/비밀번호가 일치하지 않습니다.'})
+    
+@app.route("/kakaologin", methods=["POST"])
+def kakao_Login():
+    
+    data = json.loads(request.data)
+    print(data)
+    
+     
+    doc = {
+        'username' : data.get('username'),
+        'userid' : data.get('userid'),
+        'userpoint' : '0'
+    }    
+
+    db.users.update_one({"userid": data.get('userid')}, {"$set": doc}, upsert=True)
+        
+    return jsonify({'result': 'success', 'msg': '회원가입이 완료되었습니다.'})
 
     
 @app.route("/getuserinfo", methods=["GET"])
