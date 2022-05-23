@@ -32,5 +32,5 @@ def predict(image_file):
   elif answer==3:
     return "plastic"
 
-pred = predict('image/hwarang.jpeg')
-print(pred)
+# pred = predict('image/hwarang.jpeg')
+# print(pred)
