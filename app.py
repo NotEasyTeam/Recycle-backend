@@ -3,6 +3,7 @@ import hashlib
 import json
 from re import S
 from urllib.parse import parse_qsl
+from load_model import predict
 from bson import ObjectId
 import jwt
 from datetime import datetime, timedelta
@@ -149,13 +150,13 @@ def image_predict(user):
 
 
     # 예측
-    # pred = predict(save_location)
+    pred = predict(save_location)
 
     # DB로 결과와 함께 전달
     doc={
         'userid': db_user["userid"],
         'image': filename,
-        # 'category': pred,
+        'category': pred,
         'date': today
     }
     db.recycles.insert_one(doc)
