@@ -145,9 +145,10 @@ def image_predict(user):
 
     extension = image.filename.split('.')[-1] #확장자 빼기
 
-    save_to = f'../R-frontend/static/image/{filename}.{extension}' # 저장 장소
+    save_to = f'static/image/{filename}.{extension}'
+    save_as = f'../R-frontend/static/image/{filename}.{extension}'# 저장 장소
     file = f'recycle_img-{mytime}.{extension}'
-    image.save(save_to) #이미지 저장
+    image.save(save_to, save_as) #이미지 저장
 
 
     # 예측
