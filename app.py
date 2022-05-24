@@ -118,7 +118,8 @@ def get_user_info(user):
     result = db.users.find_one({
         '_id': ObjectId(user["id"])
     })
-
+    point = len(list(db.recycles.find({'userid': result["userid"]}, {'_id': False})))
+    db.users.update_one({'userid': result["userid"]}, {"point": point})
     print(result)
 
     return jsonify({"msg": "success", "name": result["username"], "point": result["userpoint"]})
