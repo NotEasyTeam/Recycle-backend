@@ -137,18 +137,21 @@ def image_predict(user):
 
     filename = f'recycle_img-{mytime}'  # 파일명
 
-    extension = image.filename.split('.')[-1]  # 확장자 빼기
 
-    save_to = f'static/image/{filename}.{extension}'  # 저장 장소
-    image.save(save_to)  # 이미지 저장
+    extension = image.filename.split('.')[-1] #확장자 빼기
+
+    save_to = f'static/image/{filename}.{extension}' # 저장 장소
+    file = f'recycle_img-{mytime}.{extension}'
+    image.save(save_to) #이미지 저장
+
 
     # 예측
-    pred = predict(save_location)
+    pred = predict(save_to)
 
     # DB로 결과와 함께 전달
     doc = {
         'userid': db_user["userid"],
-        'image': filename,
+        'image': file,
         'category': pred,
         'date': today
     }
